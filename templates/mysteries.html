@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITIHAS — The 3D Sanctum of Puri</title>
+  <!-- Three.js Bundle -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-dark: #070a14;
+      --surface-glass: rgba(10, 15, 29, 0.92);
+      --surface-card: #0f172a;
+      --nav-bg: #050811;
+      --border-subtle: #1e293b;
+      
+      --amber-500: #f59e0b;
+      --amber-600: #d97706;
+      --amber-glow: rgba(245, 158, 11, 0.35);
+
+      --sky-400: #38bdf8;
+      --emerald-400: #34d399;
+
+      --text-white: #ffffff;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Light Mode Overrides */
+    [data-theme="light"] {
+      --bg-dark: #e2e8f0;
+      --surface-glass: rgba(255, 255, 255, 0.94);
+      --surface-card: #f1f5f9;
+      --nav-bg: #e2e8f0;
+      --border-subtle: #cbd5e1;
+
+      --text-white: #0f172a;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    #webgl-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+    }
+
+    /* =========================================================
+       1. GLOBAL UNIFIED HEADER (FLUSH TO TOP - NO BLACK STRIP)
+       ========================================================= */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--surface-glass);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(12px);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-glyph {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--amber-500), #9333ea);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .brand-title span {
+      color: var(--amber-500);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+
+    nav.nav-bar {
+      display: flex;
+      background: var(--nav-bg);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-item:hover {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item.active {
+      background: var(--amber-600);
+      color: #ffffff;
+      box-shadow: 0 2px 8px var(--amber-glow);
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-pill {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-pill:hover {
+      border-color: var(--amber-500);
+      color: var(--text-white);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 12px;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber-500), #ef4444);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* =========================================================
+       2. INITIAL CLOUD OVERLAY & 360 TRIGGER
+       ========================================================= */
+    #cloud-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: radial-gradient(circle at center, rgba(16, 6, 30, 0.4) 0%, rgba(4, 7, 18, 0.95) 75%);
+      transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #cloud-overlay.parted {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .unveil-prompt {
+      text-align: center;
+      transition: transform 1s ease, opacity 0.8s ease;
+      z-index: 85;
+    }
+
+    #cloud-overlay.parted .unveil-prompt {
+      transform: scale(1.12);
+      opacity: 0;
+    }
+
+    .prompt-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 6px 20px;
+      border-radius: 30px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+    }
+
+    .prompt-title {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9);
+      margin-bottom: 8px;
+    }
+
+    .prompt-sub {
+      font-size: 13.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    /* Hotspot Navigation Chips */
+    .hint-legend {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: opacity 0.5s ease;
+    }
+
+    .hotspot-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-glass);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    .hotspot-chip:hover {
+      border-color: #fbbf24;
+      color: #fbbf24;
+      transform: translateX(6px);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+    }
+
+    .dot-flag { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .dot-prasad { width: 9px; height: 9px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    .dot-gate { width: 9px; height: 9px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+
+    /* =========================================================
+       3. RIGHT DETAIL DRAWER
+       ========================================================= */
+    #mystery-drawer {
+      position: fixed;
+      top: 84px;
+      bottom: 24px;
+      right: -460px;
+      width: 410px;
+      max-width: 90vw;
+      background: var(--surface-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 26px;
+      backdrop-filter: blur(20px);
+      box-shadow: -15px 0 50px rgba(0, 0, 0, 0.7);
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+      overflow-y: auto;
+    }
+
+    #mystery-drawer.open {
+      right: 24px;
+    }
+
+    .drawer-close {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .drawer-close:hover { color: var(--text-white); }
+
+    .drawer-badge {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .badge-flag-pill { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+    .badge-prasad-pill { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #d97706; }
+    .badge-gate-pill { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #0284c7; }
+
+    .drawer-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text-white);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .drawer-prose {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .drawer-section {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    .drawer-section strong {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .controls-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      nav.nav-bar { display: none; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- ================= 1. GLOBAL HEADER ================= -->
+  <header>
+    <a href="/" class="brand-link">
+      <div class="brand-glyph">इ</div>
+      <div class="brand-title">ITIHAS<span>Sanctum Vault</span></div>
+    </a>
+
+    <!-- The 5 Navigation Highway Links -->
+    <nav class="nav-bar">
+      <a href="/" class="nav-item">Home</a>
+      <a href="/universe.html" class="nav-item">Guided Journey</a>
+      <a href="/map_explorer.html" class="nav-item">Map Explorer</a>
+      <a href="/mysteries.html" class="nav-item active">Mysteries of India</a>
+    </nav>
+
+    <!-- User Profile & Theme Toggle -->
+    <div class="header-user">
+      <button class="theme-pill" id="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+      </button>
+      <div class="user-pill">
+        <div class="user-avatar">S</div>
+        <span class="user-name">Syntax Squad</span>
+      </div>
+    </div>
+  </header>
+
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- ================= CLOUD OVERLAY ================= -->
+  <div id="cloud-overlay" onclick="trigger360CloudDispersal()">
+    <div class="unveil-prompt">
+      <div class="prompt-tag">✦ SACRED ENIGMAS VAULT</div>
+      <h1 class="prompt-title">The Mysteries of Puri</h1>
+      <p class="prompt-sub">Click anywhere to reveal the sanctum</p>
+    </div>
+  </div>
+
+  <!-- ================= HOTSPOT CHIPS ================= -->
+  <div class="hint-legend" id="hud-legend">
+    <div class="hotspot-chip" onclick="focusArtifact('flag')">
+      <span class="dot-flag"></span> 01. The Reverse Wind Flag (Patitapabana)[cite: 1, 2, 3]
+    </div>
+    <div class="hotspot-chip" onclick="focusArtifact('prasad')">
+      <span class="dot-prasad"></span> 02. Inexhaustible Mahaprasad Kitchens
+    </div>
+    <div class="hotspot-chip" onclick="focusArtifact('gate')">
+      <span class="dot-gate"></span> 03. Singhadwara Acoustic Silence[cite: 1, 2, 3]
+    </div>
+  </div>
+
+  <!-- ================= RIGHT DETAIL DRAWER ================= -->
+  <div id="mystery-drawer">
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    <div>
+      <span class="drawer-badge" id="drawer-badge">ENIGMA</span>
+      <h2 class="drawer-title" id="drawer-title">Title</h2>
+      <div class="drawer-prose" id="drawer-prose">Description</div>
+
+      <div class="drawer-section">
+        <strong style="color: #f59e0b;">Living Lore & Sacred Tradition:</strong>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;" id="drawer-tradition">Tradition text</p>
+      </div>
+
+      <div class="drawer-section">
+        <strong style="color: #10b981;">Empirical / Architectural Analysis:</strong>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;" id="drawer-science">Science text</p>
+      </div>
+    </div>
+
+    <div class="controls-hint">
+      Drag mouse to orbit • Click temple parts to inspect
+    </div>
+  </div>
+
+  <!-- ================= THREE.JS & THEME SCRIPT ================= -->
+  <script>
+    function updateThemeUI(theme) {
+      document.body.setAttribute('data-theme', theme);
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+
+      if (theme === 'light') {
+        icon.textContent = '☀️';
+        text.textContent = 'Light';
+        if (scene) {
+          scene.background = new THREE.Color(0xdbeafe);
+          scene.fog.color = new THREE.Color(0xdbeafe);
+        }
+      } else {
+        icon.textContent = '🌙';
+        text.textContent = 'Dark';
+        if (scene) {
+          scene.background = new THREE.Color(0x070a14);
+          scene.fog.color = new THREE.Color(0x070a14);
+        }
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.body.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      localStorage.setItem('itihas_theme', newTheme);
+      updateThemeUI(newTheme);
+    }
+
+    const ARTIFACT_DATA = {
+      flag: {
+        badge: "badge-flag-pill",
+        badgeText: "AERODYNAMIC ANOMALY",
+        title: "The Reverse Wind Flag (Patitapabana)[cite: 1, 2, 3]",
+        prose: "Atop the 214-foot Rekha Deula shikhara, the sacred red Patitapabana flag flutters directly against the prevailing coastal winds from the Bay of Bengal.[cite: 1, 2, 3]",
+        tradition: "For over 800 continuous years, hereditary Chuna Sevakas climb the sheer vertical tower freehand at sunset without harnesses, symbolizing divine order operating beyond mundane physical forces.[cite: 1, 2, 3]",
+        science: "Thermal differentials between the sun-baked sandstone tower and the cooler sea breeze generate a localized convective drafting eddy, turning the cloth in a counter-draft vortex.[cite: 1, 2, 3]"
+      },
+      prasad: {
+        badge: "badge-prasad-pill",
+        badgeText: "THERMAL KITCHEN ENIGMA",
+        title: "The Inexhaustible Mahaprasad",
+        prose: "Feeding up to 200,000 pilgrims during major festivals, the Rosaghara has never documented running out of food or throwing away wasted meals.",
+        tradition: "Seven unglazed earthen pots are stacked directly on top of each other over a single open wood flame. Tradition states that the top-most vessel cooks first, while the bottom-most vessel cooks last.",
+        science: "The porous earthen clay acts as a vertical heat chimney. Steam rises rapidly through the column, condensating under the high-rimmed upper lids and cooking the top pot through intense convective steam."
+      },
+      gate: {
+        badge: "badge-gate-pill",
+        badgeText: "ACOUSTIC SILENCE",
+        title: "The Silent Threshold of Singhadwara[cite: 1, 2, 3]",
+        prose: "Upon entering through the eastern Lion's Gate, the thunderous roar of the ocean crashing against the beach is silenced in an instant as your foot crosses the doorway.[cite: 1, 2, 3]",
+        tradition: "Legend tells that Goddess Subhadra asked for absolute quietude within the inner sanctum, resulting in a spiritual silencing barrier at the gateway.",
+        science: "A double right-angle baffled corridor combined with porous laterite and khondalite stone masonry traps, deflects, and dampens the high-frequency acoustic waves of oceanic surf.[cite: 1, 2, 3]"
+      }
+    };
+
+    let scene, camera, renderer;
+    let templeGroup, flagMesh, chakraMesh;
+    let cloudParticles = [];
+    let cloudGroup;
+    let goldenLights = [];
+    let embersMesh;
+    let isDispersed = false;
+
+    // Direct, unobstructed camera positioning
+    let cameraTarget = new THREE.Vector3(0, 16, 0);
+    let cameraPos = new THREE.Vector3(0, 22, 65);
+
+    let isDragging = false;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+
+    function init() {
+      const canvas = document.getElementById("webgl-canvas");
+
+      scene = new THREE.Scene();
+      const savedTheme = localStorage.getItem('itihas_theme') || 'dark';
+      const bgHex = savedTheme === 'light' ? 0xdbeafe : 0x070a14;
+      scene.background = new THREE.Color(bgHex);
+      
+      // Gentle atmospheric fog (not pitch black or blindingly thick)
+      scene.fog = new THREE.FogExp2(bgHex, 0.005);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.copy(cameraPos);
+      camera.lookAt(cameraTarget);
+
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+
+      // Clean, bright scene lighting
+      const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambient);
+
+      const sun = new THREE.DirectionalLight(0xfde68a, 1.2);
+      sun.position.set(50, 80, 40);
+      scene.add(sun);
+
+      const fill = new THREE.DirectionalLight(0x38bdf8, 0.6);
+      fill.position.set(-50, 40, -40);
+      scene.add(fill);
+
+      buildVolumetricClouds();
+      buildRealTempleArchitecture();
+      buildGoldenEmbers();
+      setupControls();
+
+      updateThemeUI(savedTheme);
+      animate();
+    }
+
+    function buildVolumetricClouds() {
+      cloudGroup = new THREE.Group();
+      
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, "rgba(245, 158, 11, 0.85)");
+      grad.addColorStop(0.4, "rgba(147, 51, 234, 0.4)");
+      grad.addColorStop(0.8, "rgba(15, 23, 42, 0.15)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+
+      const cloudTex = new THREE.CanvasTexture(canvas);
+      const cloudMat = new THREE.SpriteMaterial({
+        map: cloudTex,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      for (let i = 0; i < 90; i++) {
+        const sprite = new THREE.Sprite(cloudMat);
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = 2 * Math.PI * Math.random();
+        const rad = Math.random() * 25 + 10;
+
+        sprite.position.set(
+          rad * Math.sin(phi) * Math.cos(theta),
+          rad * Math.sin(phi) * Math.sin(theta) + 16,
+          rad * Math.cos(phi) + 20
+        );
+
+        const scale = Math.random() * 16 + 12;
+        sprite.scale.set(scale, scale, 1);
+
+        sprite.userData = {
+          velocity: sprite.position.clone().normalize().multiplyScalar(Math.random() * 2.2 + 1.5)
+        };
+
+        cloudGroup.add(sprite);
+        cloudParticles.push(sprite);
+      }
+
+      scene.add(cloudGroup);
+    }
+
+    function buildRealTempleArchitecture() {
+      templeGroup = new THREE.Group();
+
+      const stoneMat = new THREE.MeshStandardMaterial({
+        color: 0x473b56,
+        roughness: 0.7,
+        metalness: 0.2
+      });
+
+      const stoneTrim = new THREE.MeshStandardMaterial({
+        color: 0x6b5b82,
+        roughness: 0.65
+      });
+
+      const goldMat = new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        metalness: 0.85,
+        roughness: 0.2
+      });
+
+      // 1. MAIN SANCTUM: BADA DEULA (Tower & Shikhara)
+      const mainBase = new THREE.Mesh(new THREE.BoxGeometry(11, 10, 11), stoneMat);
+      mainBase.position.set(0, 5, 0);
+      templeGroup.add(mainBase);
+
+      const cornice = new THREE.Mesh(new THREE.BoxGeometry(12, 1.2, 12), stoneTrim);
+      cornice.position.set(0, 10.6, 0);
+      templeGroup.add(cornice);
+
+      const towerBody = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10), stoneMat);
+      towerBody.position.set(0, 15.6, 0);
+      templeGroup.add(towerBody);
+
+      const towerTaper = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 5.8, 10, 8), stoneMat);
+      towerTaper.position.set(0, 25.6, 0);
+      templeGroup.add(towerTaper);
+
+      const amalaka = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.8, 1.6, 16), stoneTrim);
+      amalaka.position.set(0, 31.4, 0);
+      templeGroup.add(amalaka);
+
+      const kalasha = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 1.8, 12), goldMat);
+      kalasha.position.set(0, 33.1, 0);
+      templeGroup.add(kalasha);
+
+      const chakraGeo = new THREE.TorusGeometry(1.4, 0.25, 8, 16);
+      chakraMesh = new THREE.Mesh(chakraGeo, goldMat);
+      chakraMesh.position.set(0, 34.6, 0);
+      chakraMesh.rotation.x = Math.PI / 2;
+      templeGroup.add(chakraMesh);
+
+      // Red Patitapabana Flag
+      const flagGeo = new THREE.PlaneGeometry(5.2, 2.6, 10, 4);
+      const flagMat = new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        side: THREE.DoubleSide,
+        roughness: 0.3
+      });
+      flagMesh = new THREE.Mesh(flagGeo, flagMat);
+      flagMesh.position.set(2.8, 35.8, 0);
+      flagMesh.name = "flag";
+      templeGroup.add(flagMesh);
+
+      // 2. JAGAMOHANA ASSEMBLY HALL
+      const jagBase = new THREE.Mesh(new THREE.BoxGeometry(9, 6.5, 9), stoneMat);
+      jagBase.position.set(0, 3.25, 10.5);
+      templeGroup.add(jagBase);
+
+      const jagRoof = new THREE.Mesh(new THREE.ConeGeometry(6.6, 6, 4), stoneTrim);
+      jagRoof.position.set(0, 9.5, 10.5);
+      jagRoof.rotation.y = Math.PI / 4;
+      templeGroup.add(jagRoof);
+
+      // 3. NATAMANDAPA DANCING HALL
+      const nataBase = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 8), stoneMat);
+      nataBase.position.set(0, 2.5, 19.5);
+      templeGroup.add(nataBase);
+
+      const nataRoof = new THREE.Mesh(new THREE.ConeGeometry(5.8, 4.5, 4), stoneTrim);
+      nataRoof.position.set(0, 7.25, 19.5);
+      nataRoof.rotation.y = Math.PI / 4;
+      templeGroup.add(nataRoof);
+
+      // 4. ROSAGHARA KITCHENS
+      const kitchenBuilding = new THREE.Mesh(new THREE.BoxGeometry(9, 4.5, 8), stoneMat);
+      kitchenBuilding.position.set(-16, 2.25, 6);
+      kitchenBuilding.name = "prasad";
+      templeGroup.add(kitchenBuilding);
+
+      const kitchenRoof = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.8, 8.6), stoneTrim);
+      kitchenRoof.position.set(-16, 4.8, 6);
+      kitchenRoof.name = "prasad";
+      templeGroup.add(kitchenRoof);
+
+      for (let p = 0; p < 3; p++) {
+        const pot = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.85 - p * 0.12, 0.95 - p * 0.12, 0.75, 8),
+          new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.9 })
+        );
+        pot.position.set(-16, 5.6 + p * 0.75, 6);
+        pot.name = "prasad";
+        templeGroup.add(pot);
+      }
+
+      // 5. SINGHADWARA LION'S GATE
+      const gateGroup = new THREE.Group();
+      gateGroup.name = "gate";
+
+      const pillarL = new THREE.Mesh(new THREE.BoxGeometry(1.6, 6.5, 1.6), stoneTrim);
+      pillarL.position.set(-3.5, 3.25, 27.5);
+
+      const pillarR = new THREE.Mesh(new THREE.BoxGeometry(1.6, 6.5, 1.6), stoneTrim);
+      pillarR.position.set(3.5, 3.25, 27.5);
+
+      const gateArch = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.6, 2.2), stoneTrim);
+      gateArch.position.set(0, 7.2, 27.5);
+
+      const gateCrown = new THREE.Mesh(new THREE.ConeGeometry(2.4, 2, 4), goldMat);
+      gateCrown.position.set(0, 9, 27.5);
+      gateCrown.rotation.y = Math.PI / 4;
+
+      gateGroup.add(pillarL);
+      gateGroup.add(pillarR);
+      gateGroup.add(gateArch);
+      gateGroup.add(gateCrown);
+      templeGroup.add(gateGroup);
+
+      // 6. MAIN COURTYARD PLINTH
+      const courtyard = new THREE.Mesh(
+        new THREE.BoxGeometry(52, 1, 68),
+        new THREE.MeshStandardMaterial({ color: 0x221833, roughness: 0.9 })
+      );
+      courtyard.position.y = -0.5;
+      templeGroup.add(courtyard);
+
+      // Warm Golden Spotlights
+      const lanternPositions = [
+        [0, 31, 0],
+        [0, 8, 14],
+        [-16, 6, 6],
+        [0, 8, 27]
+      ];
+
+      lanternPositions.forEach(pos => {
+        const pLight = new THREE.PointLight(0xf59e0b, 1.5, 35);
+        pLight.position.set(pos[0], pos[1], pos[2]);
+        templeGroup.add(pLight);
+        goldenLights.push(pLight);
+      });
+
+      scene.add(templeGroup);
+    }
+
+    function buildGoldenEmbers() {
+      const emberGeo = new THREE.BufferGeometry();
+      const count = 100;
+      const positions = new Float32Array(count * 3);
+
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 60;
+        positions[i + 1] = Math.random() * 35;
+        positions[i + 2] = (Math.random() - 0.5) * 60;
+      }
+
+      emberGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const emberMat = new THREE.PointsMaterial({
+        color: 0xfbbf24,
+        size: 0.42,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+
+      embersMesh = new THREE.Points(emberGeo, emberMat);
+      scene.add(embersMesh);
+    }
+
+    function trigger360CloudDispersal() {
+      if (isDispersed) return;
+      isDispersed = true;
+
+      document.getElementById("cloud-overlay").classList.add("parted");
+
+      cloudParticles.forEach(p => {
+        p.userData.dispersing = true;
+      });
+    }
+
+    function setupControls() {
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener("mousedown", (e) => {
+        if (e.target.closest("#mystery-drawer") || e.target.closest("header") || e.target.closest(".hint-legend")) return;
+        isDragging = true;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+      });
+
+      window.addEventListener("mouseup", () => { isDragging = false; });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging || !templeGroup) return;
+        const deltaX = e.clientX - prevMouseX;
+        templeGroup.rotation.y += deltaX * 0.006;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+      });
+
+      window.addEventListener("click", (e) => {
+        if (e.target.closest("#mystery-drawer") || e.target.closest("header") || e.target.closest(".hint-legend") || e.target.closest("#cloud-overlay")) return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(templeGroup.children, true);
+
+        if (intersects.length > 0) {
+          let hit = intersects[0].object;
+          while (hit.parent && !hit.name && hit !== templeGroup) {
+            hit = hit.parent;
+          }
+          if (hit && hit.name && ARTIFACT_DATA[hit.name]) {
+            focusArtifact(hit.name);
+          }
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function focusArtifact(key) {
+      if (!ARTIFACT_DATA[key]) return;
+      trigger360CloudDispersal();
+
+      const data = ARTIFACT_DATA[key];
+      const drawer = document.getElementById("mystery-drawer");
+      const badge = document.getElementById("drawer-badge");
+
+      badge.className = `drawer-badge ${data.badge}`;
+      badge.textContent = data.badgeText;
+      document.getElementById("drawer-title").textContent = data.title;
+      document.getElementById("drawer-prose").textContent = data.prose;
+      document.getElementById("drawer-tradition").textContent = data.tradition;
+      document.getElementById("drawer-science").textContent = data.science;
+
+      drawer.classList.add("open");
+
+      let targetRot = 0;
+      if (key === "flag") targetRot = 0;
+      if (key === "prasad") targetRot = Math.PI / 3;
+      if (key === "gate") targetRot = -Math.PI / 1.1;
+
+      let cur = templeGroup.rotation.y;
+      let step = 0;
+      const rotAnim = setInterval(() => {
+        step += 0.05;
+        templeGroup.rotation.y = THREE.MathUtils.lerp(cur, targetRot, step);
+        if (step >= 1) clearInterval(rotAnim);
+      }, 16);
+    }
+
+    function closeDrawer() {
+      document.getElementById("mystery-drawer").classList.remove("open");
+    }
+
+    let clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const t = clock.getElapsedTime();
+
+      // Cloud 360 dispersal
+      if (cloudParticles.length > 0) {
+        cloudParticles.forEach(p => {
+          if (p.userData.dispersing) {
+            p.position.add(p.userData.velocity);
+            p.material.opacity = Math.max(0, p.material.opacity - 0.015);
+            p.scale.multiplyScalar(1.02);
+          } else {
+            p.position.y += Math.sin(t + p.position.x) * 0.01;
+          }
+        });
+      }
+
+      // Smooth wave for Patitapabana flag
+      if (flagMesh && flagMesh.geometry) {
+        const pos = flagMesh.geometry.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const vx = pos.getX(i);
+          pos.setZ(i, Math.sin(vx * 2.8 + t * 5.5) * 0.25);
+        }
+        flagMesh.geometry.computeVertexNormals();
+        flagMesh.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Floating temple embers
+      if (embersMesh) {
+        const pos = embersMesh.geometry.attributes.position;
+        for (let i = 1; i < pos.count * 3; i += 3) {
+          pos.array[i] += 0.06;
+          if (pos.array[i] > 35) pos.array[i] = 0;
+        }
+        embersMesh.geometry.attributes.position.needsUpdate = true;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

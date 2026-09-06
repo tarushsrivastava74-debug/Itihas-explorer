@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITIHAS — History Universe</title>
+  <style>
+    /* =========================================================
+       1. RESET & THEME TOKENS
+       ========================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-dark: #060911;
+      --surface-glass: rgba(12, 18, 32, 0.9);
+      --surface-card: #0f172a;
+      --nav-bg: #050811;
+      --border-subtle: #1e293b;
+      
+      --amber-500: #f59e0b;
+      --amber-600: #d97706;
+      --amber-glow: rgba(245, 158, 11, 0.35);
+
+      --sky-400: #38bdf8;
+      --emerald-400: #34d399;
+
+      --text-white: #ffffff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --radial-1: rgba(217, 119, 6, 0.09);
+      --radial-2: rgba(56, 189, 248, 0.05);
+
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Light Theme Overrides */
+    [data-theme="light"] {
+      --bg-dark: #f8fafc;
+      --surface-glass: rgba(255, 255, 255, 0.94);
+      --surface-card: #f1f5f9;
+      --nav-bg: #e2e8f0;
+      --border-subtle: #cbd5e1;
+
+      --text-white: #0f172a;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+
+      --radial-1: rgba(245, 158, 11, 0.12);
+      --radial-2: rgba(56, 189, 248, 0.08);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      background-image: 
+        radial-gradient(circle at 50% 50%, var(--radial-1) 0%, transparent 62%),
+        radial-gradient(circle at 80% 20%, var(--radial-2) 0%, transparent 40%);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* =========================================================
+       2. FULL HEADER WITH 5 NAVIGATION HIGHWAY BUTTONS
+       ========================================================= */
+    header {
+      width: 100%;
+      height: 64px;
+      background: var(--surface-glass);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(12px);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-glyph {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--amber-500), var(--amber-600));
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px var(--amber-glow);
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .brand-title span {
+      color: var(--amber-500);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+
+    /* 5 Navigation Highway Links */
+    nav.nav-bar {
+      display: flex;
+      background: var(--nav-bg);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-item:hover {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item.active {
+      background: var(--amber-600);
+      color: #ffffff;
+      box-shadow: 0 2px 8px var(--amber-glow);
+    }
+
+    /* User Profile & Theme Toggle */
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-pill {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-pill:hover {
+      border-color: var(--amber-500);
+      color: var(--text-white);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 12px;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber-500), #ef4444);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* =========================================================
+       3. TOP STATUS HUD
+       ========================================================= */
+    .hud-bar {
+      width: 100%;
+      padding: 10px 20px 0 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hud-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--amber-500);
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 4px;
+    }
+
+    .hud-instruction {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .hud-instruction strong {
+      color: var(--text-white);
+    }
+
+    /* =========================================================
+       4. RADIAL SVG CANVAS
+       ========================================================= */
+    .viewport-universe {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    svg#universe-svg {
+      width: 820px;
+      height: 820px;
+      max-width: 95vw;
+      max-height: 84vh;
+      overflow: visible;
+    }
+
+    .orbit-guide-outer {
+      fill: none;
+      stroke: var(--border-subtle);
+      stroke-width: 1.2;
+      stroke-dasharray: 4, 8;
+      animation: spinClockwise 110s linear infinite;
+      transform-origin: 430px 430px;
+    }
+
+    .orbit-guide-inner {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 1;
+    }
+
+    [data-theme="light"] .orbit-guide-inner {
+      stroke: rgba(0, 0, 0, 0.06);
+    }
+
+    @keyframes spinClockwise {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .center-disc {
+      cursor: pointer;
+      transform-origin: 430px 430px;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+    }
+
+    .center-disc:hover {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 24px var(--amber-glow));
+    }
+
+    .center-disc:active {
+      transform: scale(0.97);
+    }
+
+    .center-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      fill: #ffffff;
+      text-anchor: middle;
+      pointer-events: none;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+    }
+
+    .center-subtitle {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      fill: #fde68a;
+      text-anchor: middle;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .arc-group {
+      cursor: pointer;
+      transform-origin: 430px 430px;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+    }
+
+    .arc-group:hover {
+      filter: brightness(1.2) drop-shadow(0 0 18px rgba(245, 158, 11, 0.5));
+    }
+
+    .arc-label-line1 {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      fill: #ffffff;
+      text-transform: uppercase;
+      pointer-events: none;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    .arc-label-line2 {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      fill: #fef08a;
+      text-transform: uppercase;
+      pointer-events: none;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    /* =========================================================
+       5. BOTTOM CONTROLS
+       ========================================================= */
+    .bottom-bar {
+      position: absolute;
+      bottom: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .action-btn {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--nav-bg);
+      color: var(--text-white);
+      border-color: var(--amber-500);
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- ================= 1. GLOBAL HEADER ================= -->
+  <header>
+    <a href="/" class="brand-link">
+      <div class="brand-glyph">इ</div>
+      <div class="brand-title">ITIHAS<span>Universe</span></div>
+    </a>
+
+    <!-- The 5 Navigation Highway Links -->
+    <nav class="nav-bar">
+      <a href="/" class="nav-item">Home</a>
+      <a href="/universe.html" class="nav-item active">Guided Journey</a>
+      <a href="/map_explorer.html" class="nav-item">Map Explorer</a>
+      <a href="/mysteries.html" class="nav-item">Mysteries of India</a>
+    </nav>
+
+    <!-- User Profile & Theme Toggle -->
+    <div class="header-user">
+      <button class="theme-pill" id="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+      </button>
+      <div class="user-pill">
+        <div class="user-avatar">S</div>
+        <span class="user-name">Syntax Squad</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 2. TOP STATUS HUD ================= -->
+  <div class="hud-bar">
+    <div class="hud-badge" id="hud-badge">LEVEL 0 • CIVILIZATIONAL ORIGIN</div>
+    <div class="hud-instruction" id="hud-text">
+      Click the central <strong>"INDIAN HISTORY"</strong> circle to split history into its 3 major epochs.
+    </div>
+  </div>
+
+  <!-- ================= 3. RADIAL UNIVERSE ================= -->
+  <div class="viewport-universe">
+    <!-- Center coordinate is (430, 430) inside an 860x860 space -->
+    <svg id="universe-svg" viewBox="0 0 860 860">
+      <defs>
+        <radialGradient id="center-core-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#b45309" />
+          <stop offset="65%" stop-color="#78350f" />
+          <stop offset="100%" stop-color="#451a03" />
+        </radialGradient>
+
+        <linearGradient id="ancient-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0284c7" />
+          <stop offset="100%" stop-color="#0369a1" />
+        </linearGradient>
+
+        <linearGradient id="medieval-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f59e0b" />
+          <stop offset="100%" stop-color="#b45309" />
+        </linearGradient>
+
+        <linearGradient id="modern-arc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10b981" />
+          <stop offset="100%" stop-color="#047857" />
+        </linearGradient>
+      </defs>
+
+      <!-- Background decorative rings -->
+      <circle cx="430" cy="430" r="390" class="orbit-guide-outer" />
+      <circle cx="430" cy="430" r="260" class="orbit-guide-inner" />
+
+      <!-- LAYER WHERE EXPANDED ARCS APPEAR -->
+      <g id="arcs-container"></g>
+
+      <!-- CENTER DISC (Radius 102) -->
+      <g id="center-disc" class="center-disc" onclick="handleCenterCircleClick()">
+        <circle cx="430" cy="430" r="102" fill="url(#center-core-grad)" stroke="#f59e0b" stroke-width="2.5" />
+        <circle cx="430" cy="430" r="95" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.2" stroke-dasharray="3, 4" />
+        
+        <text x="430" y="423" class="center-subtitle" id="center-sub-label">CLICK TO UNVEIL</text>
+        <text x="430" y="444" class="center-title" id="center-main-label">INDIAN HISTORY</text>
+      </g>
+    </svg>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-bar">
+      <button class="action-btn" id="tier-back-btn" style="display:none;" onclick="openLevelOneEras()">← Back to 3 Eras</button>
+      <button class="action-btn" onclick="resetToBeginning()">↺ Reset to Central Hub</button>
+    </div>
+  </div>
+
+  <!-- ================= 4. UNIVERSE ENGINE & THEME SCRIPT ================= -->
+  <script>
+    /* Theme Toggle Sync with LocalStorage */
+    function updateThemeUI(theme) {
+      document.body.setAttribute('data-theme', theme);
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+
+      if (theme === 'light') {
+        icon.textContent = '☀️';
+        text.textContent = 'Light';
+      } else {
+        icon.textContent = '🌙';
+        text.textContent = 'Dark';
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.body.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      localStorage.setItem('itihas_theme', newTheme);
+      updateThemeUI(newTheme);
+    }
+
+    const CX = 430;
+    const CY = 430;
+
+    let currentLevel = 0;
+    let selectedEraId = null;
+
+    // LEVEL 1: 3 Major Eras
+    const LEVEL_1_ERAS = [
+      {
+        id: 'ancient',
+        title: 'Ancient History',
+        centerName: 'ANCIENT ERA',
+        span: 'c. 2500 BCE – 650 CE',
+        startDeg: -90,
+        endDeg: 30,
+        fill: 'url(#ancient-arc-grad)',
+        stroke: '#38bdf8'
+      },
+      {
+        id: 'medieval',
+        title: 'Medieval History',
+        centerName: 'MEDIEVAL ERA',
+        span: 'c. 650 – 1757 CE',
+        startDeg: 30,
+        endDeg: 150,
+        fill: 'url(#medieval-arc-grad)',
+        stroke: '#fbbf24'
+      },
+      {
+        id: 'modern',
+        title: 'Modern History',
+        centerName: 'MODERN ERA',
+        span: 'c. 1757 – 1947 CE',
+        startDeg: 150,
+        endDeg: 270,
+        fill: 'url(#modern-arc-grad)',
+        stroke: '#34d399'
+      }
+    ];
+
+    // LEVEL 2: Exact 7 Headings with Clean Line 1 & Line 2 Pairing
+    const ERA_SECTIONS = {
+      ancient: {
+        title: 'ANCIENT HISTORY',
+        badge: 'ANCIENT SECTION • 7 PILLARS',
+        sub: '2500 BCE – 650 CE',
+        topics: [
+          { id: 'buddhism-jainism', line1: 'Buddhism', line2: '& Jainism', fill: '#0284c7', stroke: '#38bdf8' },
+          { id: 'gupta-empire', line1: 'Gupta', line2: 'Empire', fill: '#0369a1', stroke: '#7dd3fc' },
+          { id: 'indus-valley', line1: 'Indus Valley', line2: 'Civilization', fill: '#0891b2', stroke: '#67e8f9' },
+          { id: 'mahajanapadas', line1: 'Mahajanapadas', line2: '& Rise of Magadha', fill: '#0f766e', stroke: '#2dd4bf' },
+          { id: 'maurya-empire', line1: 'Maurya', line2: 'Empire', fill: '#047857', stroke: '#34d399' },
+          { id: 'sangam-age', line1: 'Sangam Age', line2: '& South India', fill: '#1d4ed8', stroke: '#60a5fa' },
+          { id: 'vedic-period', line1: 'Vedic', line2: 'Period', fill: '#4338ca', stroke: '#818cf8' }
+        ]
+      },
+      medieval: {
+        title: 'MEDIEVAL HISTORY',
+        badge: 'MEDIEVAL SECTION • 7 EMPIRES',
+        sub: '650 – 1757 CE',
+        topics: [
+          { id: 'chola-empire', line1: 'Chola', line2: 'Empire', fill: '#ea580c', stroke: '#fb923c' },
+          { id: 'delhi-sultanate', line1: 'Delhi', line2: 'Sultanate', fill: '#0284c7', stroke: '#38bdf8' },
+          { id: 'maratha-empire', line1: 'Maratha', line2: 'Empire', fill: '#d97706', stroke: '#fde68a' },
+          { id: 'mughal-empire', line1: 'Mughal', line2: 'Empire', fill: '#dc2626', stroke: '#f87171' },
+          { id: 'rajput-kingdoms', line1: 'Rajput', line2: 'Kingdoms', fill: '#b45309', stroke: '#fcd34d' },
+          { id: 'sikh-empire', line1: 'Sikh', line2: 'Empire', fill: '#ca8a04', stroke: '#fde047' },
+          { id: 'vijayanagara-empire', line1: 'Vijayanagara', line2: 'Empire', fill: '#7c3aed', stroke: '#c084fc' }
+        ]
+      },
+      modern: {
+        title: 'MODERN HISTORY',
+        badge: 'MODERN SECTION • 7 MOVEMENTS',
+        sub: '1757 – 1947 CE',
+        topics: [
+          { id: 'east-india-company', line1: 'British East India', line2: '& Expansion', fill: '#b91c1c', stroke: '#fca5a5' },
+          { id: 'civil-disobedience', line1: 'Civil Disobedience', line2: '& Quit India', fill: '#047857', stroke: '#6ee7b7' },
+          { id: 'gandhian-era', line1: 'Gandhian Era', line2: '& Non-Cooperation', fill: '#0d9488', stroke: '#5eead4' },
+          { id: 'independence-partition', line1: 'Independence', line2: '& Partition', fill: '#4338ca', stroke: '#a5b4fc' },
+          { id: 'early-nationalism', line1: 'Early Nationalism', line2: '& Congress', fill: '#1e40af', stroke: '#93c5fd' },
+          { id: 'revolt-1857', line1: 'Revolt of', line2: '1857', fill: '#991b1b', stroke: '#f87171' },
+          { id: 'swadeshi-movement', line1: 'Swadeshi', line2: 'Movement', fill: '#c2410c', stroke: '#fdba74' }
+        ]
+      }
+    };
+
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
+      return {
+        x: centerX + radius * Math.cos(angleInRadians),
+        y: centerY + radius * Math.sin(angleInRadians)
+      };
+    }
+
+    function buildArcSector(x, y, innerR, outerR, startAngle, endAngle) {
+      const outerStart = polarToCartesian(x, y, outerR, startAngle);
+      const outerEnd = polarToCartesian(x, y, outerR, endAngle);
+      const innerStart = polarToCartesian(x, y, innerR, endAngle);
+      const innerEnd = polarToCartesian(x, y, innerR, startAngle);
+
+      const largeArc = (endAngle - startAngle) <= 180 ? '0' : '1';
+
+      return [
+        `M ${outerStart.x} ${outerStart.y}`,
+        `A ${outerR} ${outerR} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+        `L ${innerStart.x} ${innerStart.y}`,
+        `A ${innerR} ${innerR} 0 ${largeArc} 0 ${innerEnd.x} ${innerEnd.y}`,
+        'Z'
+      ].join(' ');
+    }
+
+    function buildCurvedTextTrack(x, y, radius, startAngle, endAngle) {
+      const start = polarToCartesian(x, y, radius, startAngle);
+      const end = polarToCartesian(x, y, radius, endAngle);
+      const largeArc = (endAngle - startAngle) <= 180 ? '0' : '1';
+      return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+    }
+
+    function handleCenterCircleClick() {
+      if (currentLevel === 0) {
+        openLevelOneEras();
+      }
+    }
+
+    // LEVEL 1: 3 Major Eras
+    function openLevelOneEras() {
+      currentLevel = 1;
+      selectedEraId = null;
+
+      const container = document.getElementById('arcs-container');
+      container.innerHTML = '';
+
+      document.getElementById('center-main-label').textContent = 'INDIAN HISTORY';
+      document.getElementById('center-sub-label').textContent = 'ACTIVE HUB';
+      document.getElementById('hud-badge').textContent = 'LEVEL 1 • 3 MAJOR EPOCHS';
+      document.getElementById('hud-text').innerHTML = 'Click any era (<strong>Ancient</strong>, <strong>Medieval</strong>, or <strong>Modern</strong>) to explore its 7 pillars.';
+      document.getElementById('tier-back-btn').style.display = 'none';
+
+      const innerRadius = 120;
+      const outerRadius = 245;
+      const textRadius = (innerRadius + outerRadius) / 2 + 5;
+
+      LEVEL_1_ERAS.forEach((era, idx) => {
+        const gap = 3;
+        const sDeg = era.startDeg + gap;
+        const eDeg = era.endDeg - gap;
+
+        const pathSector = buildArcSector(CX, CY, innerRadius, outerRadius, sDeg, eDeg);
+        const pathTrack = buildCurvedTextTrack(CX, CY, textRadius, sDeg + 4, eDeg - 4);
+        const trackId = `era-track-${idx}`;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'arc-group');
+        g.onclick = () => openLevelTwoSection(era.id);
+
+        g.innerHTML = `
+          <path d="${pathTrack}" id="${trackId}" fill="none" stroke="none" />
+          <path d="${pathSector}" fill="${era.fill}" stroke="${era.stroke}" stroke-width="2" />
+          <text class="arc-label-line1" style="font-size: 15px;">
+            <textPath href="#${trackId}" startOffset="50%" text-anchor="middle">
+              ${era.title}
+            </textPath>
+          </text>
+        `;
+
+        container.appendChild(g);
+      });
+    }
+
+    // LEVEL 2: Two Dedicated Curved Tracks per Arc
+    function openLevelTwoSection(eraId) {
+      currentLevel = 2;
+      selectedEraId = eraId;
+
+      const data = ERA_SECTIONS[eraId];
+      if (!data) return;
+
+      const container = document.getElementById('arcs-container');
+      container.innerHTML = '';
+
+      document.getElementById('center-main-label').textContent = data.title;
+      document.getElementById('center-sub-label').textContent = data.sub;
+      document.getElementById('hud-badge').textContent = data.badge;
+      document.getElementById('hud-text').innerHTML = `Select any of the <strong>7 ${data.title}</strong> pillars to launch its chronological timeline.`;
+      document.getElementById('tier-back-btn').style.display = 'inline-block';
+
+      const innerRadius = 125;
+      const outerRadius = 335;
+      const radiusLine1 = 265;
+      const radiusLine2 = 210;
+
+      const count = data.topics.length;
+      const sliceAngle = 360 / count;
+
+      data.topics.forEach((topic, idx) => {
+        const gap = 2.2;
+        const startDeg = -90 + (idx * sliceAngle);
+        const endDeg = startDeg + sliceAngle;
+
+        const sDeg = startDeg + gap;
+        const eDeg = endDeg - gap;
+
+        const pathSector = buildArcSector(CX, CY, innerRadius, outerRadius, sDeg, eDeg);
+        
+        const pathTrack1 = buildCurvedTextTrack(CX, CY, radiusLine1, sDeg + 1.5, eDeg - 1.5);
+        const trackId1 = `track1-${eraId}-${idx}`;
+
+        const pathTrack2 = buildCurvedTextTrack(CX, CY, radiusLine2, sDeg + 1.5, eDeg - 1.5);
+        const trackId2 = `track2-${eraId}-${idx}`;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'arc-group');
+        g.onclick = () => {
+          window.location.href = `timeline.html?topic=${topic.id}`;
+        };
+
+        g.innerHTML = `
+          <path d="${pathTrack1}" id="${trackId1}" fill="none" stroke="none" />
+          <path d="${pathTrack2}" id="${trackId2}" fill="none" stroke="none" />
+          <path d="${pathSector}" fill="${topic.fill}" fill-opacity="0.88" stroke="${topic.stroke}" stroke-width="1.6" />
+          
+          <text class="arc-label-line1">
+            <textPath href="#${trackId1}" startOffset="50%" text-anchor="middle">
+              ${topic.line1}
+            </textPath>
+          </text>
+
+          <text class="arc-label-line2">
+            <textPath href="#${trackId2}" startOffset="50%" text-anchor="middle">
+              ${topic.line2}
+            </textPath>
+          </text>
+        `;
+
+        container.appendChild(g);
+      });
+    }
+
+    function resetToBeginning() {
+      currentLevel = 0;
+      selectedEraId = null;
+      document.getElementById('arcs-container').innerHTML = '';
+      document.getElementById('center-main-label').textContent = 'INDIAN HISTORY';
+      document.getElementById('center-sub-label').textContent = 'CLICK TO UNVEIL';
+      document.getElementById('hud-badge').textContent = 'LEVEL 0 • CIVILIZATIONAL ORIGIN';
+      document.getElementById('hud-text').innerHTML = 'Click the central <strong>"INDIAN HISTORY"</strong> circle to split history into its 3 major epochs.';
+      document.getElementById('tier-back-btn').style.display = 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Sync with global theme preference
+      const savedTheme = localStorage.getItem('itihas_theme') || 'dark';
+      updateThemeUI(savedTheme);
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedEra = params.get('era');
+      if (requestedEra && ERA_SECTIONS[requestedEra]) {
+        openLevelTwoSection(requestedEra);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITIHAS — Interactive Historical Roleplay Engine</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-dark: #070a12;
+      --panel-dark: #0d1424;
+      --card-inner: #131d33;
+      --surface-card: #0f172a;
+      --nav-bg: #050811;
+      --border-subtle: #1e293b;
+      --border-hover: #334155;
+
+      --amber-500: #f59e0b;
+      --amber-600: #d97706;
+      --amber-glow: rgba(245, 158, 11, 0.3);
+      --sky-400: #38bdf8;
+      --emerald-400: #10b981;
+      --crimson-500: #ef4444;
+
+      --text-white: #ffffff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --radial-1: rgba(217, 119, 6, 0.08);
+      --radial-2: rgba(56, 189, 248, 0.06);
+
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Light Theme Overrides */
+    [data-theme="light"] {
+      --bg-dark: #f8fafc;
+      --panel-dark: #ffffff;
+      --card-inner: #f1f5f9;
+      --surface-card: #e2e8f0;
+      --nav-bg: #e2e8f0;
+      --border-subtle: #cbd5e1;
+      --border-hover: #94a3b8;
+
+      --text-white: #0f172a;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+
+      --radial-1: rgba(245, 158, 11, 0.12);
+      --radial-2: rgba(56, 189, 248, 0.08);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 15% 20%, var(--radial-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 75%, var(--radial-2) 0%, transparent 45%);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* =========================================================
+       1. GLOBAL UNIFIED HEADER
+       ========================================================= */
+    header {
+      width: 100%;
+      height: 64px;
+      background: var(--panel-dark);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(12px);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-badge {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--amber-500), var(--amber-600));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px var(--amber-glow);
+    }
+
+    .brand-text {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .brand-text span {
+      color: var(--amber-500);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-left: 5px;
+    }
+
+    nav.nav-bar {
+      display: flex;
+      background: var(--nav-bg);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-item:hover {
+      color: var(--text-white);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item.active {
+      background: var(--amber-600);
+      color: #ffffff;
+      box-shadow: 0 2px 8px var(--amber-glow);
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-pill {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .theme-pill:hover {
+      border-color: var(--amber-500);
+      color: var(--text-white);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 12px;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber-500), #ef4444);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* =========================================================
+       2. ROLEPLAY STAGE LAYOUT
+       ========================================================= */
+    .simulation-workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      padding: 20px 24px;
+      overflow: hidden;
+    }
+
+    /* Left Control & Context Rail */
+    .scenario-sidebar {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      overflow-y: auto;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--amber-500);
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .scenario-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-white);
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .scenario-era {
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--sky-400);
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .scenario-premise {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .state-metrics-box {
+      background: var(--card-inner);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .metric-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .metric-label {
+      color: var(--text-dim);
+    }
+
+    .metric-val {
+      font-weight: 700;
+      color: var(--text-white);
+    }
+
+    .restart-btn {
+      width: 100%;
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .restart-btn:hover {
+      background: var(--nav-bg);
+      border-color: var(--amber-500);
+      color: var(--text-white);
+    }
+
+    /* Right Interactive Narrative Chronicle */
+    .narrative-viewport {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .chronicle-log {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .log-node {
+      border-left: 3px solid var(--amber-500);
+      padding-left: 14px;
+    }
+
+    .log-turn-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber-500);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .log-narrative-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text-main);
+    }
+
+    .log-choice-made {
+      margin-top: 8px;
+      font-size: 12px;
+      font-style: italic;
+      color: var(--sky-400);
+    }
+
+    /* Decision Dock (Buttons for Next Move) */
+    .decision-dock {
+      background: var(--card-inner);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .dock-prompt {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-white);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice-card-btn {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.45;
+      transition: all 0.2s ease;
+    }
+
+    .choice-card-btn:hover {
+      border-color: var(--amber-500);
+      background: var(--surface-card);
+      color: var(--text-white);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .choice-tag {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber-500);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    @media (max-width: 900px) {
+      nav.nav-bar { display: none; }
+      .simulation-workspace { grid-template-columns: 1fr; }
+      .options-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- ================= 1. GLOBAL HEADER ================= -->
+  <header>
+    <a href="/" class="brand-group">
+      <div class="brand-badge">इ</div>
+      <div class="brand-text">ITIHAS<span>Simulation Forge</span></div>
+    </a>
+
+    <!-- Unified 5-Highway Links -->
+    <nav class="nav-bar">
+      <a href="/" class="nav-item">Home</a>
+      <a href="/universe.html" class="nav-item">Guided Journey</a>
+      <a href="/map_explorer.html" class="nav-item">Map Explorer</a>
+      <a href="/mysteries.html" class="nav-item">Mysteries of India</a>
+    </nav>
+
+    <!-- Theme & User Capsule -->
+    <div class="header-user">
+      <button class="theme-pill" id="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+      </button>
+      <div class="user-pill">
+        <div class="user-avatar">S</div>
+        <span class="user-name">Syntax Squad</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 2. ROLEPLAY STAGE ================= -->
+  <div class="simulation-workspace">
+    
+    <!-- LEFT: SCENARIO CONTEXT & METRICS -->
+    <div class="scenario-sidebar">
+      <div>
+        <span class="status-badge">CAMPAIGN ACTIVE</span>
+        <h1 class="scenario-title" id="scenario-title">Battle of Haldighati</h1>
+        <span class="scenario-era" id="scenario-era">c. 1576 CE • Mewar Sovereignty</span>
+
+        <p class="scenario-premise" id="scenario-premise">
+          You command Maharana Pratap's vanguard at the narrow Haldighati pass in the Aravalli range. Imperial Mughal armies under Man Singh I approach with artillery and heavy cavalry.
+        </p>
+
+        <div class="state-metrics-box">
+          <div class="metric-row">
+            <span class="metric-label">Your Role</span>
+            <span class="metric-val" id="metric-role">Maharana Pratap</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Allied Strength</span>
+            <span class="metric-val" id="metric-forces">3,000 Cavalry & Bhil Archers</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Tactical Terrain</span>
+            <span class="metric-val" id="metric-terrain">Narrow Mountain Pass</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="restart-btn" onclick="restartScenario()">↺ Restart Scenario</button>
+    </div>
+
+    <!-- RIGHT: INTERACTIVE NARRATIVE LOG & DECISION DOCK -->
+    <div class="narrative-viewport">
+      
+      <!-- Scrollable Historical Story Log -->
+      <div class="chronicle-log" id="chronicle-log">
+        <!-- Story turns append dynamically here -->
+      </div>
+
+      <!-- Real-time Decision Choice Options -->
+      <div class="decision-dock">
+        <div class="dock-prompt">
+          <span>⚡ Select Your Next Strategic Directive:</span>
+        </div>
+        <div class="options-grid" id="options-container">
+          <!-- Choice buttons will render dynamically here -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= 3. ENGINE LOGIC & AI ADAPTER HOOKS ================= -->
+  <script>
+    /* Global Theme Sync Engine */
+    function updateThemeUI(theme) {
+      document.body.setAttribute('data-theme', theme);
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+
+      if (theme === 'light') {
+        icon.textContent = '☀️';
+        text.textContent = 'Light';
+      } else {
+        icon.textContent = '🌙';
+        text.textContent = 'Dark';
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.body.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('itihas_theme', newTheme);
+      updateThemeUI(newTheme);
+    }
+
+    // =========================================================================
+    // TOPIC SELECTION
+    // The topic must exactly match a quiz_data/<TOPIC>.json filename (minus ".json"),
+    // since that's the exact key quiz.py's get_quiz_node() looks up.
+    // Pass it via the URL, e.g. simulation.html?topic=Buddhism___Jainism
+    // =========================================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const TOPIC = urlParams.get("topic") || "Buddhism___Jainism";
+
+    // Human-friendly title shown in the sidebar (swap underscores for spaces)
+    const TOPIC_DISPLAY_NAME = TOPIC.replace(/_+/g, " ").trim();
+
+    // =========================================================================
+    // BACKEND BRIDGE: fetch a round or ending node from /get-quiz-question
+    // =========================================================================
+    async function fetchQuizNode(path) {
+      const res = await fetch("/get-quiz-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: TOPIC, path: path })
+      });
+
+      if (!res.ok) {
+        let detail = "";
+        try {
+          const errBody = await res.json();
+          if (errBody.available_topics) {
+            detail = ` Available topics: ${errBody.available_topics.join(", ")}`;
+          } else if (errBody.error) {
+            detail = ` ${errBody.error}`;
+          }
+        } catch (_) { /* body wasn't JSON, ignore */ }
+        throw new Error(`Quiz node not found for topic "${TOPIC}", path "${path}" (HTTP ${res.status}).${detail}`);
+      }
+      return res.json();
+    }
+
+    // =========================================================================
+    // ROLEPLAY ENGINE CONTROLLER
+    // =========================================================================
+    let currentPath = "round1";
+    let currentNode = null;
+    let storyHistory = [];
+
+    async function initScenario() {
+      document.getElementById("scenario-title").textContent = TOPIC_DISPLAY_NAME;
+      document.getElementById("scenario-era").textContent = "";
+      document.getElementById("metric-role").textContent = "—";
+      document.getElementById("metric-forces").textContent = "—";
+      document.getElementById("metric-terrain").textContent = "—";
+
+      currentPath = "round1";
+      storyHistory = [];
+
+      const logContainer = document.getElementById("chronicle-log");
+      logContainer.innerHTML = "";
+
+      try {
+        currentNode = await fetchQuizNode(currentPath);
+      } catch (err) {
+        appendStoryNode("Error", `Could not load scenario: ${err.message}`);
+        return;
+      }
+
+      document.getElementById("scenario-premise").textContent = currentNode.question || "";
+
+      // Append Prologue Node
+      appendStoryNode("Prologue • Strategic Deployment", currentNode.question);
+
+      // Render First Set of Choices
+      renderCurrentOptions();
+    }
+
+    function appendStoryNode(title, bodyText, choiceLabel = null) {
+      const logContainer = document.getElementById("chronicle-log");
+      const node = document.createElement("div");
+      node.className = "log-node";
+
+      let inner = `
+        <span class="log-turn-tag">${title}</span>
+        <div class="log-narrative-text">${bodyText}</div>
+      `;
+
+      if (choiceLabel) {
+        inner += `<div class="log-choice-made">Chosen Command: ${choiceLabel}</div>`;
+      }
+
+      node.innerHTML = inner;
+      logContainer.appendChild(node);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function renderCurrentOptions() {
+      const optionsContainer = document.getElementById("options-container");
+      optionsContainer.innerHTML = "";
+
+      // Ending nodes have no "options" key - campaign is resolved
+      if (!currentNode || !currentNode.options) {
+        optionsContainer.innerHTML = `
+          <div style="grid-column: span 2; text-align: center; padding: 10px; font-size: 13px; color: var(--emerald-400);">
+            ✓ Campaign Resolution Reached. You may restart to explore alternate strategies.
+          </div>
+        `;
+        return;
+      }
+
+      // options is an object keyed by letter, e.g. { "A": {...}, "B": {...} }
+      Object.entries(currentNode.options).forEach(([letter, opt]) => {
+        const btn = document.createElement("button");
+        btn.className = "choice-card-btn";
+        btn.innerHTML = `
+          <span class="choice-tag">[Option ${letter}]</span>
+          ${opt.text}
+        `;
+        btn.onclick = () => handleChoiceSelection(letter, opt);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    async function handleChoiceSelection(letter, choice) {
+      // 1. Disable buttons while processing
+      const buttons = document.querySelectorAll(".choice-card-btn");
+      buttons.forEach(b => { b.disabled = true; b.style.opacity = "0.5"; });
+
+      // 2. Log the consequence already written into the quiz data
+      appendStoryNode("Directive Executed", choice.consequence, choice.text);
+
+      // 3. Advance to the next branch/ending
+      storyHistory.push({ step: currentPath, choice: letter });
+      currentPath = choice.next;
+
+      try {
+        currentNode = await fetchQuizNode(currentPath);
+      } catch (err) {
+        appendStoryNode("Error", `Could not load next step: ${err.message}`);
+        return;
+      }
+
+      // 4. If we've landed on an ending, show its title + story as the final node
+      if (currentNode && currentNode.story) {
+        appendStoryNode(currentNode.title || "Ending", currentNode.story);
+      } else if (currentNode && currentNode.question) {
+        appendStoryNode("Strategic Deployment", currentNode.question);
+      }
+
+      // 5. Render next decisions (or resolution message)
+      renderCurrentOptions();
+    }
+
+    function restartScenario() {
+      initScenario();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      // Sync Theme from LocalStorage
+      const savedTheme = localStorage.getItem('itihas_theme') || 'dark';
+      updateThemeUI(savedTheme);
+
+      // Launch Engine
+      initScenario();
+    });
+  </script>
+</body>
+</html>
