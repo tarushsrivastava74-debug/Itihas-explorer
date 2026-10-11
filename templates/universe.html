@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITIHAS — The Chronological Axis of Time</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-void: #020408;
+      --surface-glass: rgba(10, 14, 24, 0.75);
+      --surface-card: rgba(16, 22, 36, 0.6);
+      --border-line: rgba(245, 158, 11, 0.18);
+      --border-active: rgba(245, 158, 11, 0.8);
+      --gold-primary: #f59e0b;
+      --gold-bright: #fde68a;
+      --gold-deep: #78350f;
+      --gold-glow: rgba(245, 158, 11, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg-void: #f4f4f6;
+      --surface-glass: rgba(255, 255, 255, 0.85);
+      --surface-card: rgba(255, 255, 255, 0.7);
+      --border-line: rgba(180, 83, 9, 0.2);
+      --border-active: rgba(180, 83, 9, 0.8);
+      --gold-primary: #d97706;
+      --gold-bright: #b45309;
+      --gold-deep: #451a03;
+      --gold-glow: rgba(217, 119, 6, 0.15);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      transition: background-color 0.5s ease;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1000px;
+      height: 600px;
+      background: radial-gradient(circle, var(--gold-glow) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* HEADER */
+    header {
+      width: 100%;
+      min-height: 60px;
+      background: var(--surface-glass);
+      border-bottom: 1px solid var(--border-line);
+      backdrop-filter: blur(20px);
+      padding: 10px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-main);
+      flex-shrink: 0;
+    }
+
+    /* ITIHAS logo */
+    .brand-logo{width:40px;height:40px;flex:none;overflow:visible;filter:drop-shadow(0 0 8px var(--gold-glow))}
+    .brand-logo path{fill:none;stroke-linecap:round}
+    .brand-logo .lg-arch{stroke:var(--text-main);stroke-width:5}
+    .brand-logo .lg-trim{stroke:var(--gold-primary);stroke-width:2.5;opacity:.6}
+    .brand-logo .lg-base{stroke:var(--text-main);stroke-width:5}
+    .brand-logo .lg-base2{stroke:var(--gold-primary);stroke-width:3;opacity:.5}
+    .brand-logo .lg-star,.brand-logo .lg-i{fill:var(--gold-primary);stroke:none}
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+
+    .brand-title span {
+      color: var(--gold-primary);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-left: 0;
+    }
+
+    nav.nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .nav-item {
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      color: var(--gold-primary);
+      font-weight: 700;
+    }
+
+    .header-controls,
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .theme-pill {
+      background: var(--surface-glass);
+      border: 1px solid var(--border-line);
+      color: var(--text-muted);
+      font-size: 11.5px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .theme-pill:hover {
+      border-color: var(--gold-primary);
+      color: var(--text-main);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 14px;
+      border-left: 1px solid var(--border-line);
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-deep));
+      flex-shrink: 0;
+    }
+
+    /* AXIS OF TIME STAGE */
+    main.axis-stage {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 50px 24px 100px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .axis-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold-primary);
+      margin-bottom: 10px;
+    }
+
+    h1.axis-heading {
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    p.axis-subtitle {
+      font-size: 15.5px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 580px;
+      margin-bottom: 50px;
+    }
+
+    .axis-controls-bar {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 30px;
+    }
+
+    .return-btn {
+      background: var(--surface-glass);
+      border: 1px solid var(--border-line);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s var(--spring-smooth);
+    }
+
+    .return-btn:hover {
+      border-color: var(--gold-primary);
+      transform: translateX(-3px);
+      box-shadow: 0 4px 15px var(--gold-glow);
+    }
+
+    /* VERTICAL TIMELINE */
+    .axis-line-container {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      padding: 20px 0;
+    }
+
+    .axis-line-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 32px;
+      width: 3px;
+      background: linear-gradient(
+        to bottom,
+        var(--gold-deep),
+        var(--gold-primary),
+        var(--gold-deep)
+      );
+      box-shadow: 0 0 15px var(--gold-glow);
+    }
+
+    .axis-node {
+      position: relative;
+      margin-bottom: 36px;
+      padding-left: 80px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: revealNode 0.6s var(--spring-smooth) forwards;
+    }
+
+    @keyframes revealNode {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .axis-node::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 24px;
+      width: 19px;
+      height: 19px;
+      background: var(--bg-void);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--gold-glow);
+      z-index: 2;
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .axis-node:hover::before {
+      background: var(--gold-primary);
+      transform: scale(1.25);
+    }
+
+    .axis-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-line);
+      border-radius: 20px;
+      padding: 30px 36px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+      transition: all 0.35s var(--spring-smooth);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .axis-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, var(--gold-glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .axis-card:hover {
+      border-color: var(--border-active);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 22px 50px var(--gold-glow);
+    }
+
+    .axis-card:hover::after {
+      opacity: 1;
+    }
+
+    .card-meta-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--gold-primary);
+      margin-bottom: 6px;
+    }
+
+    .card-main-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-description {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .card-explore-trigger {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: gap 0.2s ease;
+    }
+
+    .axis-card:hover .card-explore-trigger {
+      gap: 12px;
+    }
+
+    /* RESPONSIVE HEADER */
+    @media (max-width: 1100px) {
+      header {
+        padding: 10px 20px;
+        gap: 16px;
+      }
+
+      nav.nav-bar {
+        gap: 14px;
+      }
+
+      .nav-item {
+        font-size: 11.5px;
+      }
+    }
+
+    @media (max-width: 850px) {
+      header {
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+
+      nav.nav-bar {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 8px 0 2px;
+      }
+
+      .header-user {
+        margin-left: auto;
+      }
+    }
+
+    @media (max-width: 520px) {
+      header {
+        padding: 10px 14px;
+      }
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .brand-title span {
+        font-size: 8px;
+      }
+
+      .user-name {
+        display: none;
+      }
+
+      .user-pill {
+        padding-left: 10px;
+      }
+
+      main.axis-stage {
+        padding: 36px 16px 70px;
+      }
+
+      .axis-line-container::before {
+        left: 12px;
+      }
+
+      .axis-node {
+        padding-left: 36px;
+      }
+
+      .axis-node::before {
+        left: 4px;
+        width: 19px;
+        height: 19px;
+      }
+
+      .axis-card {
+        padding: 22px 20px;
+      }
+
+      .card-main-title {
+        font-size: 19px;
+      }
+
+      p.axis-subtitle {
+        font-size: 14px;
+        margin-bottom: 32px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- HEADER -->
+  <header>
+    <a href="/" class="brand-link">
+      <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ITIHAS"><path class="lg-arch" d="M 22 102 V 54 C 22 26, 98 26, 98 54 V 102" /><path class="lg-trim" d="M 32 102 V 58 C 32 38, 88 38, 88 58 V 102" /><path class="lg-base" d="M 12 102 H 108" /><path class="lg-base2" d="M 22 109 H 98" /><path class="lg-star" d="M 60 12 L 62 19 L 69 21 L 62 23 L 60 30 L 58 23 L 51 21 L 58 19 Z" /><path class="lg-i" transform="translate(46.9 80.9) scale(0.052 -0.052)" d="M333 202Q328 202 285 192Q260 186 229 186Q169 186 109.0 250.5Q49 315 49 374Q49 407 73.0 435.5Q97 464 127 464H301V520H-10V633H514V520H414V371H161Q167 340 191.0 316.5Q215 293 244 293Q273 293 302 302Q337 312 367 312Q411 312 440.0 278.5Q469 245 469 206Q469 64 343 10Q401 -50 476 -78L408 -178Q349 -141 308.0 -105.5Q267 -70 210 -12Q132 -10 87.0 17.5Q42 45 42 99Q42 141 70.5 160.5Q99 180 124.0 180.0Q149 180 170.5 172.0Q192 164 211.0 147.0Q230 130 239.0 120.5Q248 111 264 91Q298 95 326.0 117.0Q354 139 355 169Q355 202 333 202Z" /></svg>
+
+      <div class="brand-title">
+        ITIHAS
+        <span>Chronological Axis</span>
+      </div>
+    </a>
+
+    <nav class="nav-bar">
+      <a href="/" class="nav-item">Home</a>
+      <a href="/universe.html" class="nav-item active">Guided Journey</a>
+      <a href="/map_explorer.html" class="nav-item">Map Explorer</a>
+      <a href="/mysteries.html" class="nav-item">Mysteries of India</a>
+      <a href="/roadmap.html" class="nav-item">Roadmap</a>
+    </nav>
+
+    <div class="header-user">
+      <button
+        class="theme-pill"
+        id="theme-toggle-btn"
+        onclick="toggleTheme()"
+        aria-label="Toggle color theme"
+      >
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+      </button>
+
+      <div class="user-pill">
+        <script src="/static/progress.js"></script>
+        <script>ItihasProgress.ensureLogin();</script>
+        <div class="user-avatar">G</div>
+        <span class="user-name">Guest</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- STAGE -->
+  <main class="axis-stage">
+    <div class="axis-eyebrow" id="axis-eyebrow">The Continuum</div>
+
+    <h1 class="axis-heading" id="axis-heading">
+      Axis of Indian History
+    </h1>
+
+    <p class="axis-subtitle" id="axis-subtitle">
+      Traverse down the vertical continuum of time where epochs flow seamlessly into one another.
+    </p>
+
+    <div class="axis-controls-bar" id="axis-controls-bar" style="display: none;">
+      <button class="return-btn" onclick="renderEpochsAxis()">
+        ← Return to Epoch Continuum
+      </button>
+    </div>
+
+    <div class="axis-line-container" id="axis-stream">
+      <!-- Injected dynamically -->
+    </div>
+  </main>
+
+  <!-- ENGINE -->
+  <script>
+    function updateThemeUI(theme) {
+      document.body.setAttribute('data-theme', theme);
+      document.getElementById('theme-icon').textContent =
+        theme === 'light' ? '☀️' : '🌙';
+      document.getElementById('theme-text').textContent =
+        theme === 'light' ? 'Light' : 'Dark';
+    }
+
+    function toggleTheme() {
+      const next =
+        document.body.getAttribute('data-theme') === 'dark'
+          ? 'light'
+          : 'dark';
+
+      try {
+        localStorage.setItem('itihas_theme', next);
+      } catch (e) {}
+
+      updateThemeUI(next);
+    }
+
+    const AXIS_EPOCHS = [
+      {
+        id: 'ancient',
+        span: 'c. 2500 BCE – 650 CE',
+        title: 'Ancient Axis',
+        desc: 'The foundational dawn along the Indus valley river systems, the crystallization of Vedic philosophy, the grand statecraft of Magadha, and the zenith of classical Gupta art and science.'
+      },
+      {
+        id: 'medieval',
+        span: 'c. 650 – 1757 CE',
+        title: 'Medieval Axis',
+        desc: 'An era of magnificent architectural synthesis, maritime Chola dominance across Southeast Asia, shifting Sultanate courts, and the expansive administration of the Mughal empire.'
+      },
+      {
+        id: 'modern',
+        span: 'c. 1757 – 1947 CE',
+        title: 'Modern Axis',
+        desc: 'The dramatic friction of colonial trade expansion, the crucible of the 1857 uprising, nationwide Satyagraha mass movements, and the historic birth of modern India.'
+      }
+    ];
+
+    const AXIS_PILLARS = {
+      ancient: [
+        { id: 'buddhism-jainism', meta: 'Ethical Revolution', title: 'Buddhism & Jainism', desc: 'The rise of ascetic reform movements challenging orthodox ritualism, preaching non-violence, karma, and liberation across the Gangetic plains.' },
+        { id: 'gupta-empire', meta: 'Classical Golden Age', title: 'Gupta Empire', desc: 'A period of artistic refinement, mathematical discoveries, Sanskrit literature, and astronomical mastery.' },
+        { id: 'indus-valley', meta: 'Urban Origins', title: 'Indus Valley Civilization', desc: 'Advanced town planning, sophisticated drainage systems, standardized weights, and seals testifying to ancient commerce.' },
+        { id: 'mahajanapadas', meta: 'Statecraft & Magadha', title: 'Mahajanapadas & Magadha', desc: 'The consolidation of sixteen powerful territorial states leading to imperial dominance under rulers in Northern India.' },
+        { id: 'maurya-empire', meta: 'Imperial Unification', title: 'Maurya Empire', desc: 'Chandragupta and Ashoka unifying much of the subcontinent under a vast administrative system, spreading edicts of Dhamma across rock pillars.' },
+        { id: 'sangam-age', meta: 'Classical Deep South', title: 'Sangam Age & Maritime Trade', desc: 'Tamil literature, royal patronage of the Chera, Chola, and Pandya dynasties, and flourishing Roman-Indian maritime trade.' },
+        { id: 'vedic-period', meta: 'Cosmic Order & Ritual', title: 'Vedic Period', desc: 'The composition of sacred Samhitas, Upanishadic philosophical inquiries into Brahman and Atman, and the evolution of social structures.' }
+      ],
+      medieval: [
+        { id: 'chola-empire', meta: 'Maritime & Temple Mastery', title: 'Chola Empire', desc: 'Rajaraja and Rajendra projecting naval power across the Indian Ocean to Southeast Asia while building monumental temples such as the one at Thanjavur.' },
+        { id: 'delhi-sultanate', meta: 'Indo-Islamic Synthesis', title: 'Delhi Sultanate', desc: 'Five successive dynasties introducing Persian administration, military innovations, Qutb Minar architecture, and urban monetary reforms.' },
+        { id: 'maratha-empire', meta: 'Swaraj & Confederacy', title: 'Maratha Empire', desc: 'Chhatrapati Shivaji Maharaj establishing Swaraj through hill-fort strategies, later expanding into a powerful confederacy.' },
+        { id: 'mughal-empire', meta: 'Grandeur & Administration', title: 'Mughal Empire', desc: 'Akbar’s policies, revenue administration, miniature painting, architecture including the Taj Mahal, and extensive territorial rule.' },
+        { id: 'rajput-kingdoms', meta: 'Valor & Hill Forts', title: 'Rajput Kingdoms', desc: 'Rajput dynasties and their codes of honour, defending formidable fortresses across Mewar, Marwar, and Amber.' },
+        { id: 'sikh-empire', meta: 'Punjab Sovereignty', title: 'Sikh Empire', desc: 'Maharaja Ranjit Singh unifying Punjab into a powerful state with a formidable military and diverse administration.' },
+        { id: 'vijayanagara-empire', meta: 'Deccan Cultural Centre', title: 'Vijayanagara Empire', desc: 'The City of Victory patronizing music and regional literature, and building remarkable stone temples at Hampi.' }
+      ],
+      modern: [
+        { id: 'east-india-company', meta: 'Mercantilism to Hegemony', title: 'British East India Company', desc: 'The gradual corporate takeover beginning with Plassey and Buxar, transforming trading posts into territorial sovereignty.' },
+        { id: 'civil-disobedience', meta: 'Mass Non-Cooperation', title: 'Civil Disobedience & Quit India', desc: 'The Dandi Salt March, nationwide boycotts, and the 1942 Quit India movement challenging colonial rule.' },
+        { id: 'gandhian-era', meta: 'Satyagraha & Ahimsa', title: 'Gandhian Era & Non-Cooperation', desc: 'Mahatma Gandhi transforming the freedom struggle into a mass political movement rooted in truth and non-violent resistance.' },
+        { id: 'independence-partition', meta: 'Independence & Partition', title: 'Independence & Partition', desc: 'Independence on 15 August 1947 and the creation of two states amid the immense human consequences of Partition.' },
+        { id: 'early-nationalism', meta: 'Political Awakening', title: 'Early Nationalism & Congress', desc: 'The founding of the Indian National Congress in 1885, constitutional petitions, and the rise of Swadeshi nationalism.' },
+        { id: 'revolt-1857', meta: 'The Revolt of 1857', title: 'Revolt of 1857', desc: 'A major uprising involving sepoys and civilians across parts of northern India that profoundly changed British rule.' },
+        { id: 'swadeshi-movement', meta: 'Economic Self-Reliance', title: 'Swadeshi Movement', desc: 'Protesting the partition of Bengal through boycotts of foreign goods, support for indigenous industries, and national education.' }
+      ]
+    };
+
+    function renderEpochsAxis() {
+      document.getElementById('axis-eyebrow').textContent = 'The Continuum';
+      document.getElementById('axis-heading').textContent = 'Axis of Indian History';
+      document.getElementById('axis-subtitle').textContent =
+        'Traverse down the vertical continuum of time where epochs flow seamlessly into one another.';
+      document.getElementById('axis-controls-bar').style.display = 'none';
+
+      const stream = document.getElementById('axis-stream');
+      stream.innerHTML = '';
+
+      AXIS_EPOCHS.forEach((epoch, idx) => {
+        const node = document.createElement('div');
+        node.className = 'axis-node';
+        node.style.animationDelay = `${idx * 0.15}s`;
+        node.onclick = () => renderPillarsAxis(epoch.id, epoch.title);
+
+        node.innerHTML = `
+          <div class="axis-card">
+            <div class="card-meta-tag">${epoch.span}</div>
+            <div class="card-main-title">${epoch.title}</div>
+            <div class="card-description">${epoch.desc}</div>
+            <div class="card-explore-trigger">Explore Axis Epoch ➔</div>
+          </div>
+        `;
+
+        stream.appendChild(node);
+      });
+    }
+
+    function renderPillarsAxis(epochId, epochTitle) {
+      const pillars = AXIS_PILLARS[epochId];
+
+      if (!pillars) {
+        renderEpochsAxis();
+        return;
+      }
+
+      document.getElementById('axis-eyebrow').textContent =
+        `Active Dimension • ${epochTitle}`;
+      document.getElementById('axis-heading').textContent = epochTitle;
+      document.getElementById('axis-subtitle').textContent =
+        'Select any chronological anchor along this axis to launch its interactive timeline study.';
+      document.getElementById('axis-controls-bar').style.display = 'flex';
+
+      const stream = document.getElementById('axis-stream');
+      stream.innerHTML = '';
+
+      pillars.forEach((pillar, idx) => {
+        const node = document.createElement('div');
+        node.className = 'axis-node';
+        node.style.animationDelay = `${idx * 0.08}s`;
+        node.onclick = () => {
+          window.location.href =
+            `timeline.html?topic=${encodeURIComponent(pillar.id)}`;
+        };
+
+        node.innerHTML = `
+          <div class="axis-card">
+            <div class="card-meta-tag">${pillar.meta}</div>
+            <div class="card-main-title">${pillar.title}</div>
+            <div class="card-description">${pillar.desc}</div>
+            <div class="card-explore-trigger">Launch Chronology Timeline ➔</div>
+          </div>
+        `;
+
+        stream.appendChild(node);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      let savedTheme = 'dark';
+
+      try {
+        savedTheme = localStorage.getItem('itihas_theme') || 'dark';
+      } catch (e) {}
+
+      updateThemeUI(savedTheme);
+
+      const params = new URLSearchParams(window.location.search);
+      const era = params.get('era');
+
+      if (era && AXIS_PILLARS[era]) {
+        renderPillarsAxis(era, era.toUpperCase() + ' AXIS');
+      } else {
+        renderEpochsAxis();
+      }
+    });
+  </script>
+</body>
+</html>
