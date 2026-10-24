@@ -464,18 +464,29 @@
         // 1) show the choice under the question it answered
         markChoiceOnLastNode(choiceLabel);
 
-        // 2) then add the new step, with no choice attached
-        turnCount += 1;
-        const turnTitle = data.title || data.step_title || `Turn ${turnCount}`;
-        appendStoryNode(turnTitle, readNarrative(data));
+        const rawOptions = data.options || data.choices;
+        const hasOptions = Array.isArray(rawOptions)
+          ? rawOptions.length > 0
+          : !!rawOptions && Object.keys(rawOptions).length > 0;
 
         updateSidebar(data);
 
-        renderOptions(
-          data.options || data.choices,
-          data.ending_title || "Historical Resolution",
-          data.ending_narrative || data.outcome || ""
-        );
+        if (hasOptions) {
+          // 2) normal step: add the new node, with no choice attached
+          turnCount += 1;
+          const turnTitle = data.title || data.step_title || `Turn ${turnCount}`;
+          appendStoryNode(turnTitle, readNarrative(data));
+          renderOptions(rawOptions);
+        } else {
+          // ending: the conclusion goes in the green box, not in the log
+          renderOptions(
+            [],
+            data.ending_title || "Historical Resolution",
+            data.ending_narrative || data.outcome || readNarrative(data)
+          );
+          const logContainer = document.getElementById("chronicle-log");
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
       } catch (err) {
         console.error(err);
         appendStoryNode("Connection Error", "Could not load the next chapter. Please try again.");
