@@ -188,16 +188,19 @@ p.hero-description{font-size:15.5px;color:var(--muted);max-width:520px;animation
 .philosophy-title::before{content:"";width:28px;height:1px;background:var(--amber)}
 .previews-section{padding-bottom:110px}
 .previews-header{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:22px}
-.previews-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+
+/* three cards now that Roleplay is removed */
+.previews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
 .preview-card{--mx:50%;--my:50%;position:relative;overflow:hidden;background:var(--elevated);border:1px solid var(--line);border-radius:18px;
-  padding:26px;text-decoration:none;display:flex;flex-direction:column;justify-content:space-between;min-height:210px;
+  padding:26px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;
+  min-height:210px;min-width:0;
   transition:border-color .3s,transform .4s var(--ease)}
-.preview-card::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .3s;
+.preview-card::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none;
   background:radial-gradient(260px circle at var(--mx) var(--my),var(--glow),transparent 70%)}
 .preview-card:hover{border-color:var(--line-hot);transform:translateY(-4px)}
 .preview-card:hover::before{opacity:1}
 .preview-card>*{position:relative}
-.preview-card-title{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between}
+.preview-card-title{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px}
 .preview-card-desc{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:22px}
 .preview-card-link{font-size:13px;font-weight:600;color:var(--amber)}
 
@@ -346,21 +349,31 @@ p.hero-description{font-size:15.5px;color:var(--muted);max-width:520px;animation
 <section class="previews-section">
   <div class="previews-header">Explore specific dimensions</div>
   <div class="previews-grid">
-    <a href="map_explorer.html" class="preview-card"><div>
-      <div class="preview-card-title">Map Explorer <span>🗺</span></div>
-      <div class="preview-card-desc">Geopolitical boundaries shifting across centuries of empire and change.</div></div>
-      <div class="preview-card-link">Launch Atlas →</div></a>
-    <a href="simulation.html" class="preview-card"><div>
-      <div class="preview-card-title">Roleplay Simulation <span>⚔️</span></div>
-      <div class="preview-card-desc">Step into pivotal historical turning points and weigh command decisions.</div></div>
-      <div class="preview-card-link">Enter Council →</div></a>
-      <div class="preview-card-title">Mysteries of India <span>🏛️</span></div>
-      <div class="preview-card-desc">Inspect architectural anomalies and unwritten engineering feats.</div></div>
-      <div class="preview-card-link">View Sanctums →</div></a>
-    <a href="roadmap.html" class="preview-card"><div>
-      <div class="preview-card-title">Chronicle Roadmap <span>📊</span></div>
-      <div class="preview-card-desc">Track your mastery progress across epochs and historical modules.</div></div>
-      <div class="preview-card-link">View Progress →</div></a>
+
+    <a href="map_explorer.html" class="preview-card">
+      <div>
+        <div class="preview-card-title">Map Explorer <span>🗺</span></div>
+        <div class="preview-card-desc">Geopolitical boundaries shifting across centuries of empire and change.</div>
+      </div>
+      <div class="preview-card-link">Launch Atlas →</div>
+    </a>
+
+    <a href="mysteries.html" class="preview-card">
+      <div>
+        <div class="preview-card-title">Mysteries of India <span>🏛️</span></div>
+        <div class="preview-card-desc">Inspect architectural anomalies and unwritten engineering feats.</div>
+      </div>
+      <div class="preview-card-link">View Sanctums →</div>
+    </a>
+
+    <a href="roadmap.html" class="preview-card">
+      <div>
+        <div class="preview-card-title">Chronicle Roadmap <span>📊</span></div>
+        <div class="preview-card-desc">Track your mastery progress across epochs and historical modules.</div>
+      </div>
+      <div class="preview-card-link">View Progress →</div>
+    </a>
+
   </div>
 </section>
 
