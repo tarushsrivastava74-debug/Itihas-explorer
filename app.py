@@ -7,7 +7,7 @@ import os
 import re
 from datetime import datetime, timezone
 
-from flask import Flask, render_template, request, jsonify, abort, session
+from flask import Flask, render_template, request, jsonify, abort, session,Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 
@@ -151,6 +151,19 @@ def current_user():
 
 
 # ---------- page routes ----------
+@app.route("/sitemap.xml")
+def sitemap():
+    base = "https://itihas-explorer.onrender.com"
+    pages = ["/", "/roadmap.html", "/map_explorer.html", "/mysteries.html", "/universe.html", "/intro.html", "/india.html"]  
+    for slug in SLUG_TO_TOPIC:
+        pages.append(f"/timeline.html?topic={slug}")
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for p in pages:
+        xml += f"<url><loc>{base}{p}</loc></url>\n"
+    xml += "</urlset>"
+    return Response(xml, mimetype="application/xml")
+    
 @app.route("/")
 def home():
     # index.html - topic menu / map
