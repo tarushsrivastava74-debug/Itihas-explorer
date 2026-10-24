@@ -90,10 +90,7 @@
       border-bottom: 1px solid var(--line);
     }
 
-    /* ---------- brand logo (NEW) ----------
-       Placeholder styles so the logo shows right away.
-       If your homepage has the real .brand-link / .lg-* rules,
-       paste those here instead and delete this block. */
+    /* ---------- brand logo ---------- */
     .brand-link { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
     .brand-logo { width: 42px; height: 42px; flex-shrink: 0; }
     .lg-arch, .lg-trim, .lg-base, .lg-base2 { fill: none; stroke: var(--amber-500); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
@@ -212,7 +209,7 @@
       border-color: var(--line-hot); color: var(--text-white); transform: translateY(-3px);
       box-shadow: 0 12px 30px var(--glow);
     }
-    .choice-card-btn:disabled { cursor: default; }
+    .choice-card-btn:disabled { cursor: default; opacity: .55; }
     .choice-tag { font-size: 12px; font-weight: 700; color: var(--amber-500); display: block; margin-bottom: 4px; }
 
     @media (max-width: 900px) {
@@ -326,12 +323,13 @@
     }
 
     const QUIZ_KEY = {{ (quiz_key | tojson) if quiz_key is defined else "null" }}
-      || new URLSearchParams(window.location.search).get('topic') 
-      || new URLSearchParams(window.location.search).get('quiz_key') 
+      || new URLSearchParams(window.location.search).get('topic')
+      || new URLSearchParams(window.location.search).get('quiz_key')
       || 'buddhism_jainism';
 
     let currentPath = "round1";
-    let isInitialLoad = true;
+    let turnCount = 0;
+    let isLoading = false;
 
     async function fetchStepData(path) {
       const response = await fetch('/get-quiz-question', {
@@ -350,24 +348,38 @@
       return await response.json();
     }
 
-    function appendStoryNode(title, bodyText, choiceLabel = null) {
+    /* Adds a new story node. It no longer prints the chosen option. */
+    function appendStoryNode(title, bodyText) {
       if (!bodyText) return;
       const logContainer = document.getElementById("chronicle-log");
       const node = document.createElement("div");
       node.className = "log-node";
 
-      let inner = `
-        <span class="log-turn-tag">${title}</span>
-        <div class="log-narrative-text">${bodyText}</div>
-      `;
+      const tag = document.createElement("span");
+      tag.className = "log-turn-tag";
+      tag.textContent = title;
 
-      if (choiceLabel) {
-        inner += `<div class="log-choice-made">Chosen Directive: ${choiceLabel}</div>`;
-      }
+      const body = document.createElement("div");
+      body.className = "log-narrative-text";
+      body.innerHTML = bodyText;
 
-      node.innerHTML = inner;
+      node.appendChild(tag);
+      node.appendChild(body);
       logContainer.appendChild(node);
       logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    /* THE FIX: attach the chosen option to the node already on screen
+       (the question it answers), before the next node is added. */
+    function markChoiceOnLastNode(choiceLabel) {
+      if (!choiceLabel) return;
+      const nodes = document.querySelectorAll("#chronicle-log .log-node");
+      const last = nodes[nodes.length - 1];
+      if (!last) return;
+      const c = document.createElement("div");
+      c.className = "log-choice-made";
+      c.textContent = `Chosen Directive: ${choiceLabel}`;
+      last.appendChild(c);
     }
 
     function renderOptions(rawOptions, endingTitle = "Historical Resolution", endingNarrative = "") {
@@ -402,99 +414,94 @@
       optionsList.forEach((opt, idx) => {
         const btn = document.createElement("button");
         btn.className = "choice-card-btn";
-        const tag = opt.tag || opt.type || `Directive ${idx + 1}`;
-        const title = opt.title || opt.text || opt.label || opt.description || "Advance";
-        const nextTarget = opt.next || opt.nextStep || opt.path || opt.id;
 
-        btn.innerHTML = `
-          <span class="choice-tag">[${tag}]</span>
-          ${title}
-        `;
-        btn.onclick = () => handleChoiceSelection(title, nextTarget);
+        const tag = opt.tag || opt.type || `Directive ${idx + 1}`;
+        const title = opt.title || opt.text || opt.label || opt.description || String(opt.id || "");
+        const nextPath = opt.next || opt.path || opt.id;
+
+        const tagEl = document.createElement("span");
+        tagEl.className = "choice-tag";
+        tagEl.textContent = tag;
+
+        const titleEl = document.createElement("span");
+        titleEl.textContent = title;
+
+        btn.appendChild(tagEl);
+        btn.appendChild(titleEl);
+
+        btn.addEventListener("click", () => handleChoice(nextPath, title));
         optionsContainer.appendChild(btn);
       });
     }
 
+    function updateSidebar(data) {
+      const meta = data.scenario || data.meta || data;
+      const set = (id, val) => {
+        if (val !== undefined && val !== null && val !== "") {
+          document.getElementById(id).textContent = val;
+        }
+      };
+      set("scenario-title", meta.scenario_title || meta.title || meta.campaign_title);
+      set("scenario-era", meta.era || meta.period);
+      set("scenario-premise", meta.premise || meta.intro || meta.description);
+      set("metric-role", meta.role || meta.your_role);
+      set("metric-forces", meta.forces || meta.allied_strength);
+      set("metric-terrain", meta.terrain || meta.tactical_terrain);
+    }
+
+    function readNarrative(data) {
+      return data.narrative || data.story || data.text || data.scenario_text || data.question || "";
+    }
+
+    /* Loads a step. choiceLabel (if any) is stamped on the PREVIOUS node first. */
     async function loadStep(path, choiceLabel = null) {
-      const optionsContainer = document.getElementById("options-container");
-      
+      if (isLoading) return;
+      isLoading = true;
       try {
-        const stepData = await fetchStepData(path);
+        const data = await fetchStepData(path);
+        currentPath = path;
 
-        if (stepData.title) document.getElementById("scenario-title").textContent = stepData.title;
-        if (stepData.era) document.getElementById("scenario-era").textContent = stepData.era;
-        if (stepData.premise || stepData.initialNarrative) {
-          document.getElementById("scenario-premise").textContent = stepData.premise || stepData.initialNarrative;
-        }
-        if (stepData.role) document.getElementById("metric-role").textContent = stepData.role;
-        if (stepData.allies || stepData.forces) document.getElementById("metric-forces").textContent = stepData.allies || stepData.forces;
-        if (stepData.terrain) document.getElementById("metric-terrain").textContent = stepData.terrain;
+        // 1) show the choice under the question it answered
+        markChoiceOnLastNode(choiceLabel);
 
-        const narrative = stepData.conclusion
-          || stepData.ending
-          || stepData.outcome
-          || stepData.resolution
-          || stepData.initialNarrative 
-          || stepData.narrative 
-          || stepData.question 
-          || stepData.questionPrompt 
-          || stepData.prompt 
-          || stepData.story
-          || "";
+        // 2) then add the new step, with no choice attached
+        turnCount += 1;
+        const turnTitle = data.title || data.step_title || `Turn ${turnCount}`;
+        appendStoryNode(turnTitle, readNarrative(data));
 
-        const rawOptions = stepData.options 
-          || stepData.choices 
-          || (stepData.question && stepData.question.options) 
-          || [];
+        updateSidebar(data);
 
-        const hasNoOptions = !rawOptions || (Array.isArray(rawOptions) ? rawOptions.length === 0 : Object.keys(rawOptions).length === 0);
-        const isEnding = stepData.is_end || stepData.end || hasNoOptions;
-
-        if (isInitialLoad) {
-          appendStoryNode("Prologue • Strategic Deployment", narrative);
-          isInitialLoad = false;
-        } else if (isEnding) {
-          appendStoryNode("Epilogue • Historical Resolution", narrative, choiceLabel);
-        } else {
-          appendStoryNode("Directive Executed", narrative || "The campaign advances.", choiceLabel);
-        }
-
-        const endingTitle = stepData.title || stepData.endingTitle || "Historical Resolution";
-        renderOptions(rawOptions, endingTitle, narrative);
-
+        renderOptions(
+          data.options || data.choices,
+          data.ending_title || "Historical Resolution",
+          data.ending_narrative || data.outcome || ""
+        );
       } catch (err) {
-        console.error("Step execution error:", err);
-        optionsContainer.innerHTML = `
-          <div style="grid-column: span 2; text-align: center; padding: 10px; font-size: 13px; color: var(--crimson-500);">
-            Failed to process simulation data. Check console logs.
-          </div>
-        `;
+        console.error(err);
+        appendStoryNode("Connection Error", "Could not load the next chapter. Please try again.");
+      } finally {
+        isLoading = false;
       }
     }
 
-    async function handleChoiceSelection(choiceLabel, nextPath) {
-      const buttons = document.querySelectorAll(".choice-card-btn");
-      buttons.forEach(b => { 
-        b.disabled = true; 
-        b.style.opacity = "0.5"; 
-      });
-
-      currentPath = nextPath;
-      await loadStep(currentPath, choiceLabel);
+    function handleChoice(nextPath, label) {
+      if (isLoading) return;
+      document.querySelectorAll("#options-container .choice-card-btn").forEach(b => { b.disabled = true; });
+      loadStep(nextPath, label);
     }
 
     function restartScenario() {
-      currentPath = "round1";
-      isInitialLoad = true;
       document.getElementById("chronicle-log").innerHTML = "";
-      loadStep(currentPath);
+      document.getElementById("options-container").innerHTML = "";
+      turnCount = 0;
+      currentPath = "round1";
+      isLoading = false;
+      loadStep("round1");
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedTheme = localStorage.getItem('itihas_theme') || 'dark';
-      updateThemeUI(savedTheme);
-      loadStep(currentPath);
-    });
+    // init
+    updateThemeUI(localStorage.getItem('itihas_theme') || 'dark');
+    loadStep(currentPath);
   </script>
 </body>
 </html>
