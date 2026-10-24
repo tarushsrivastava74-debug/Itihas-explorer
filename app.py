@@ -17,8 +17,12 @@ from quiz import get_quiz_node, QUIZ_DATA  # quiz_data/*.json is already loaded 
 # ---------- app + database setup ----------
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///itihas_explorer.db"
+db_url = os.environ.get("DATABASE_URL", "sqlite:///itihas_explorer.db")
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 # Needed for session (login). Set a real SECRET_KEY environment variable when you deploy.
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-this-before-deploy")
 db = SQLAlchemy(app)
